@@ -2,6 +2,8 @@
 torch==2.3.1+cu118
 torchvision==0.18.1+cu118
 
+einops
+timm
 diffusers==0.31.0
 transformers==4.45.2
 sentencepiece

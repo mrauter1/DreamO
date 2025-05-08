@@ -246,7 +246,6 @@ def create_demo():
             example_inps = [
                 [
                     'example_inputs/hinton.jpeg',
-                    None,
                     'id',
                     'ip',
                     'portrait, Chibi',
