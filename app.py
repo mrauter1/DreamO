@@ -193,7 +193,7 @@ def create_demo():
                 height = gr.Slider(768, 1024, 1024, step=16, label="Height")
                 num_steps = gr.Slider(8, 30, 12, step=1, label="Number of steps")
                 guidance = gr.Slider(1.0, 10.0, 3.5, step=0.1, label="Guidance")
-                seed = gr.Textbox(-1, label="Seed (-1 for random)")
+                seed = gr.Textbox(label="Seed (-1 for random)", value="-1")
                 with gr.Accordion("Advanced Options", open=False, visible=False):
                     ref_res = gr.Slider(512, 1024, 512, step=16, label="resolution for ref image")
                     neg_prompt = gr.Textbox(label="Neg Prompt", value="")
@@ -304,7 +304,7 @@ def create_demo():
                     'ip',
                     'ip',
                     'two dogs in the jungle',
-                    3356402871128791851,
+                    6187006025405083344,
                 ],
                 [
                     'example_inputs/woman3.png',
