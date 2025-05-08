@@ -247,7 +247,6 @@ def create_demo():
                 [
                     'example_inputs/hinton.jpeg',
                     'id',
-                    'ip',
                     'portrait, Chibi',
                     5443415087540486371,
                 ],
