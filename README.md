@@ -2,7 +2,7 @@
 
 Official implementation of **[DreamO: A Unified Framework for Image Customization](https://arxiv.org/abs/2504.16915)**
 
-[![arXiv](https://img.shields.io/badge/arXiv-Paper-<COLOR>.svg)](https://arxiv.org/abs/2404.16022) [![demo](https://img.shields.io/badge/🤗-HuggingFace_Demo-orange)](https://huggingface.co/spaces/ByteDance/DreamO) <br>
+[![arXiv](https://img.shields.io/badge/arXiv-Paper-<COLOR>.svg)](https://arxiv.org/abs/2504.16915) [![demo](https://img.shields.io/badge/🤗-HuggingFace_Demo-orange)](https://huggingface.co/spaces/ByteDance/DreamO) <br>
 
 
 ![Image](https://github.com/user-attachments/assets/c40d73a4-66a0-4caa-a018-671a0a15d921)
