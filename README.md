@@ -4,12 +4,12 @@ Official implementation of **[DreamO: A Unified Framework for Image Customizatio
 
 [![arXiv](https://img.shields.io/badge/arXiv-Paper-<COLOR>.svg)](https://arxiv.org/abs/2504.16915) [![demo](https://img.shields.io/badge/🤗-HuggingFace_Demo-orange)](https://huggingface.co/spaces/ByteDance/DreamO) <br>
 
+### :triangular_flag_on_post: Updates
+* **2025.05.12**: 🔥🔥 **We have updated the model to mitigate over-saturation and plastic-face issue**. The new version shows consistent improvements over the previous release. Please check it out!
+* **2025.05.08**: release codes and models
+* 2025.04.24: release DreamO tech report.
 
 ![Image](https://github.com/user-attachments/assets/c40d73a4-66a0-4caa-a018-671a0a15d921)
-
-### :triangular_flag_on_post: Updates
-* **2025.05.08**: release codes and models
-* **2025.04.24**: release DreamO tech report.
 
 ## :wrench: Dependencies and Installation
 ```bash
@@ -30,6 +30,47 @@ pip install -r requirements.txt
 ```bash
 python app.py
 ```
+We observe strong compatibility between DreamO and the accelerated FLUX LoRA variant 
+([FLUX-turbo](https://huggingface.co/alimama-creative/FLUX.1-Turbo-Alpha)), and thus enable Turbo LoRA by default, 
+reducing inference to 12 steps (vs. 25+ by default). Turbo can be disabled via `--no_turbo`, though our evaluation shows mixed results; 
+we therefore recommend keeping Turbo enabled.
+
+**tips**: If you observe limb distortion or poor text generation, try increasing the guidance scale; if the image appears overly glossy or over-saturated, consider lowering the guidance scale.
+
+### Supported Tasks
+#### IP
+This task is similar to IP-Adapter and supports a wide range of inputs including characters, objects, and animals. 
+By leveraging VAE-based feature encoding, DreamO achieves higher fidelity than previous adapter methods, with a distinct advantage in preserving character identity.
+
+![IP_example](https://github.com/user-attachments/assets/086ceabd-338b-4fef-ad1f-bab6b30a1160)
+
+#### ID
+Here, ID specifically refers to facial identity. Unlike the IP task, which considers both face and clothing, 
+the ID task focuses solely on facial features. This task is similar to InstantID and PuLID. 
+Compared to previous methods, DreamO achieves higher facial fidelity, but introduces more model contamination than the SOTA approach PuLID.
+
+![ID_example](https://github.com/user-attachments/assets/392dd325-d4f4-4abb-9718-4b16fe7844c6)
+
+tips: If you notice the face appears overly glossy, try lowering the guidance scale.
+
+#### Try-On
+This task supports inputs such as tops, bottoms, glasses, and hats, and enables virtual try-on with multiple garments. 
+Notably, our training set does not include multi-garment or ID+garment data, yet the model generalizes well to these unseen combinations.
+
+![tryon_example](https://github.com/user-attachments/assets/fefec673-110a-44f2-83a9-5b779728a734)
+
+#### Style
+This task is similar to Style-Adapter and InstantStyle. Please note that style consistency is currently less stable compared to other tasks, 
+and in the current version, style cannot be combined with other conditions. We are working on improvements in future releases—stay tuned.
+
+![style_example](https://github.com/user-attachments/assets/0a31674a-c3c2-451f-91e4-c521659d40f3)
+
+#### Multi Condition
+You can use multiple conditions (ID, IP, Try-On) to generate more creative images. 
+Thanks to the feature routing constraint proposed in the paper, DreamO effectively mitigates conflicts and entanglement among multiple entities.
+
+![multi_cond_example](https://github.com/user-attachments/assets/e43e6ebb-a028-4b29-b76d-3eaa1e69b9c9)
+
 
 ### Online HuggingFace Demo
 You can try DreamO demo on [HuggingFace](https://huggingface.co/spaces/ByteDance/DreamO).
