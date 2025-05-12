@@ -10,8 +10,6 @@ Official implementation of **[DreamO: A Unified Framework for Image Customizatio
 * **2025.05.08**: release codes and models
 * 2025.04.24: release DreamO tech report.
 
-![Image](https://github.com/user-attachments/assets/c40d73a4-66a0-4caa-a018-671a0a15d921)
-
 ## :wrench: Dependencies and Installation
 ```bash
 # clone DreamO repo
