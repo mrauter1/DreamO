@@ -95,6 +95,7 @@ class DreamOPipeline(FluxPipeline):
 
         self.set_adapters(adapter_names, adapter_weights)
         self.fuse_lora(adapter_names=adapter_names, lora_scale=1)
+        self.unload_lora_weights()
 
         self.t5_embedding = self.t5_embedding.to(device)
         self.task_embedding = self.task_embedding.to(device)
@@ -470,6 +471,10 @@ class DreamOPipeline(FluxPipeline):
                     progress_bar.update()
 
         self._current_timestep = None
+
+        if self.offload:
+            self.transformer.cpu()
+            torch.cuda.empty_cache()
 
         if output_type == "latent":
             image = latents

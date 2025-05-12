@@ -5,7 +5,8 @@ Official implementation of **[DreamO: A Unified Framework for Image Customizatio
 [![arXiv](https://img.shields.io/badge/arXiv-Paper-<COLOR>.svg)](https://arxiv.org/abs/2504.16915) [![demo](https://img.shields.io/badge/🤗-HuggingFace_Demo-orange)](https://huggingface.co/spaces/ByteDance/DreamO) <br>
 
 ### :triangular_flag_on_post: Updates
-* **2025.05.12**: 🔥🔥 **We have updated the model to mitigate over-saturation and plastic-face issue**. The new version shows consistent improvements over the previous release. Please check it out!
+* **2025.05.12**: 🔥🔥 Support consumer-grade GPUs (16GB or 24GB) now, see [here](#for-consumer-grade-gpus) for instruction
+* **2025.05.11**: 🔥🔥 **We have updated the model to mitigate over-saturation and plastic-face issue**. The new version shows consistent improvements over the previous release. Please check it out!
 * **2025.05.08**: release codes and models
 * 2025.04.24: release DreamO tech report.
 
@@ -36,6 +37,16 @@ reducing inference to 12 steps (vs. 25+ by default). Turbo can be disabled via `
 we therefore recommend keeping Turbo enabled.
 
 **tips**: If you observe limb distortion or poor text generation, try increasing the guidance scale; if the image appears overly glossy or over-saturated, consider lowering the guidance scale.
+
+#### For consumer-grade GPUs
+We have added support for 8-bit quantization and CPU offload to enable execution on consumer-grade GPUs. This requires the `optimum-quanto` library, and thus the PyTorch version in `requirements.txt` has been upgraded to 2.6.0. If you are using an older version of PyTorch, you may need to reconfigure your environment.
+
+**For users with 24GB GPUs**, run `python app.py --int8` to enable the int8-quantized model.
+
+**For users with 16GB GPUs**, run `python app.py --int8 --offload` to enable CPU offloading alongside int8 quantization. Note that CPU offload significantly reduces inference speed and should only be enabled when necessary.
+
+
+
 
 ### Supported Tasks
 #### IP
