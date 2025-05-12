@@ -41,9 +41,9 @@ we therefore recommend keeping Turbo enabled.
 #### For consumer-grade GPUs
 We have added support for 8-bit quantization and CPU offload to enable execution on consumer-grade GPUs. This requires the `optimum-quanto` library, and thus the PyTorch version in `requirements.txt` has been upgraded to 2.6.0. If you are using an older version of PyTorch, you may need to reconfigure your environment.
 
-**For users with 24GB GPUs**, run `python app.py --int8` to enable the int8-quantized model.
+- **For users with 24GB GPUs**, run `python app.py --int8` to enable the int8-quantized model.
 
-**For users with 16GB GPUs**, run `python app.py --int8 --offload` to enable CPU offloading alongside int8 quantization. Note that CPU offload significantly reduces inference speed and should only be enabled when necessary.
+- **For users with 16GB GPUs**, run `python app.py --int8 --offload` to enable CPU offloading alongside int8 quantization. Note that CPU offload significantly reduces inference speed and should only be enabled when necessary.
 
 
 
