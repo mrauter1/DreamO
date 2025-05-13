@@ -7,7 +7,7 @@ timm
 diffusers==0.31.0
 transformers==4.45.2
 sentencepiece
-gradio==4.44.1
+gradio
 spaces
 huggingface_hub
 accelerate==0.32.0
