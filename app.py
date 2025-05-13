@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# import os
+# os.environ["TORCH_CUDA_ARCH_LIST"] = "8.0"
 import argparse
 
 import cv2
@@ -20,15 +22,24 @@ import numpy as np
 import torch
 from facexlib.utils.face_restoration_helper import FaceRestoreHelper
 from huggingface_hub import hf_hub_download
+from optimum.quanto import freeze, qint8, quantize
 from PIL import Image
 from torchvision.transforms.functional import normalize
 
 from dreamo.dreamo_pipeline import DreamOPipeline
-from dreamo.utils import img2tensor, resize_numpy_image_area, tensor2img
+from dreamo.utils import (
+    img2tensor,
+    resize_numpy_image_area,
+    resize_numpy_image_long,
+    tensor2img,
+)
 from tools import BEN2
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--port', type=int, default=8080)
+parser.add_argument('--no_turbo', action='store_true')
+parser.add_argument('--int8', action='store_true')
+parser.add_argument('--offload', action='store_true')
 args = parser.parse_args()
 
 
@@ -49,12 +60,34 @@ class Generator:
             save_ext='png',
             device=device,
         )
+        if args.offload:
+            self.ben_to_device(torch.device('cpu'))
+            self.facexlib_to_device(torch.device('cpu'))
 
         # load dreamo
         model_root = 'black-forest-labs/FLUX.1-dev'
         dreamo_pipeline = DreamOPipeline.from_pretrained(model_root, torch_dtype=torch.bfloat16)
-        dreamo_pipeline.load_dreamo_model(device, use_turbo=True)
+        dreamo_pipeline.load_dreamo_model(device, use_turbo=not args.no_turbo)
+        if args.int8:
+            print('start quantize')
+            quantize(dreamo_pipeline.transformer, qint8)
+            freeze(dreamo_pipeline.transformer)
+            quantize(dreamo_pipeline.text_encoder_2, qint8)
+            freeze(dreamo_pipeline.text_encoder_2)
+            print('done quantize')
         self.dreamo_pipeline = dreamo_pipeline.to(device)
+        if args.offload:
+            self.dreamo_pipeline.enable_model_cpu_offload()
+            self.dreamo_pipeline.offload = True
+        else:
+            self.dreamo_pipeline.offload = False
+
+    def ben_to_device(self, device):
+        self.bg_rm_model.to(device)
+
+    def facexlib_to_device(self, device):
+        self.face_helper.face_det.to(device)
+        self.face_helper.face_parse.to(device)
 
     @torch.no_grad()
     def get_align_face(self, img):
@@ -115,10 +148,20 @@ def generate_image(
     for idx, (ref_image, ref_task) in enumerate(zip(ref_images, ref_tasks)):
         if ref_image is not None:
             if ref_task == "id":
+                if args.offload:
+                    generator.facexlib_to_device(torch.device('cuda'))
+                ref_image = resize_numpy_image_long(ref_image, 1024)
                 ref_image = generator.get_align_face(ref_image)
+                if args.offload:
+                    generator.facexlib_to_device(torch.device('cpu'))
             elif ref_task != "style":
+                if args.offload:
+                    generator.ben_to_device(torch.device('cuda'))
                 ref_image = generator.bg_rm_model.inference(Image.fromarray(ref_image))
-            ref_image = resize_numpy_image_area(np.array(ref_image), ref_res * ref_res)
+                if args.offload:
+                    generator.ben_to_device(torch.device('cpu'))
+            if ref_task != "id":
+                ref_image = resize_numpy_image_area(np.array(ref_image), ref_res * ref_res)
             debug_images.append(ref_image)
             ref_image = img2tensor(ref_image, bgr2rgb=False).unsqueeze(0) / 255.0
             ref_image = 2 * ref_image - 1.0
@@ -159,9 +202,13 @@ _HEADER_ = '''
     <p style="font-size: 1rem; margin-bottom: 1.5rem;">Paper: <a href='https://arxiv.org/abs/2504.16915' target='_blank'>DreamO: A Unified Framework for Image Customization</a> | Codes: <a href='https://github.com/bytedance/DreamO' target='_blank'>GitHub</a></p>
 </div>
 
+🚩 Update Notes:
+- 2025.05.11: We have updated the model to mitigate over-saturation and plastic-face issues. The new version shows consistent improvements over the previous release.
+
 ❗️❗️❗️**User Guide:**
 - The most important thing to do first is to try the examples provided below the demo, which will help you better understand the capabilities of the DreamO model and the types of tasks it currently supports
 - For each input, please select the appropriate task type. For general objects, characters, or clothing, choose IP — we will remove the background from the input image. If you select ID, we will extract the face region from the input image (similar to PuLID). If you select Style, the background will be preserved, and you must prepend the prompt with the instruction: 'generate a same style image.' to activate the style task.
+- The most import hyperparameter in this demo is the guidance scale, which is set to 3.5 by default. If you notice that faces appear overly glossy or unrealistic—especially in ID tasks—you can lower the guidance scale (e.g., to 3). Conversely, if text rendering is poor or limb distortion occurs, increasing the guidance scale (e.g., to 4) may help.
 - To accelerate inference, we adopt FLUX-turbo LoRA, which reduces the sampling steps from 25 to 12 compared to FLUX-dev. Additionally, we distill a CFG LoRA, achieving nearly a twofold reduction in steps by eliminating the need for true CFG
 
 '''  # noqa E501
@@ -232,7 +279,7 @@ def create_demo():
                     'example_inputs/toy1.png',
                     'ip',
                     'a purple toy holding a sign saying "DreamO", on the mountain',
-                    1563188099017016129,
+                    10441727852953907380,
                 ],
                 [
                     'example_inputs/perfume.png',
