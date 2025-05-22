@@ -15,6 +15,7 @@
 # import os
 # os.environ["TORCH_CUDA_ARCH_LIST"] = "8.0"
 import argparse
+from pathlib import Path
 
 import cv2
 import gradio as gr
@@ -25,6 +26,7 @@ from huggingface_hub import hf_hub_download
 from optimum.quanto import freeze, qint8, quantize
 from PIL import Image
 from torchvision.transforms.functional import normalize
+from huggingface_hub import snapshot_download
 
 from dreamo.dreamo_pipeline import DreamOPipeline
 from dreamo.utils import (
@@ -65,8 +67,36 @@ class Generator:
             self.facexlib_to_device(torch.device('cpu'))
 
         # load dreamo
-        model_root = 'black-forest-labs/FLUX.1-dev'
-        dreamo_pipeline = DreamOPipeline.from_pretrained(model_root, torch_dtype=torch.bfloat16)
+#        model_root = 'black-forest-labs/FLUX.1-dev'
+        # ------------------------------------------------------------------
+        # 1. Ensure a local models directory exists
+        # ------------------------------------------------------------------
+        models_dir = Path(__file__).resolve().parent / "models"
+        models_dir.mkdir(exist_ok=True)
+
+        # ------------------------------------------------------------------
+        # 2. Download the Black-Forest-Labs FLUX model snapshot *into* that
+        #    directory (if it is not already there).  Using
+        #    `local_dir_use_symlinks=False` copies the actual files so that
+        #    everything lives inside the project tree.
+        # ------------------------------------------------------------------
+        flux_repo  = "black-forest-labs/FLUX.1-dev"
+        flux_local = models_dir / "FLUX.1-dev"
+        snapshot_download(
+            repo_id=flux_repo,
+            local_dir=str(flux_local),
+            local_dir_use_symlinks=False,
+            resume_download=True,          # safe if files already present
+        )
+
+        # ------------------------------------------------------------------
+        # 3. Load the pipeline **from the local snapshot** rather than the
+        #    remote repo ID.
+        # ------------------------------------------------------------------
+        dreamo_pipeline = DreamOPipeline.from_pretrained(
+            str(flux_local),
+            torch_dtype=torch.bfloat16
+        )
         dreamo_pipeline.load_dreamo_model(device, use_turbo=not args.no_turbo)
         if args.int8:
             print('start quantize')
@@ -403,6 +433,25 @@ def create_demo():
     return demo
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     demo = create_demo()
-    demo.queue().launch(server_name='0.0.0.0', server_port=args.port)
+
+    # launch() returns (app, local_url, share_url) when prevent_thread_lock=True
+    _, _, share_url = demo.queue().launch(
+        server_name="0.0.0.0",
+        server_port=args.port,
+        share=True,
+        prevent_thread_lock=True,   # <-- makes launch() return immediately
+        quiet=False                 # keep the usual console prints
+    )
+
+    # Persist the public link
+    if share_url:                                   # will be None if share=False
+        out_file = Path(__file__).with_name("url.txt")
+        out_file.write_text(share_url + "\n", encoding="utf-8")
+        print(f"[info] Public URL written to {out_file}: {share_url}", flush=True)
+
+    # Keep the main thread alive so the server keeps serving
+    import signal
+    signal.pause()
+
