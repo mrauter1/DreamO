@@ -4,6 +4,7 @@ protobuf
 optimum-quanto==0.2.7
 einops
 timm
+scipy>=1.13,<1.15
 diffusers==0.31.0
 transformers==4.45.2
 sentencepiece
