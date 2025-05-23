@@ -10,4 +10,6 @@ cd DreamO
 #exec python app.py
 
 # Alternative: to run in background and redirect logs
-nohup python app.py > /workspace/output.log 2>&1 &
+nohup python -u app.py > output.log 2>&1 &
+
+echo "Application started with PID: $!"
